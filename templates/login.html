@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Login | Inventario Repuestos{% endblock %}
+{% block content %}
+<section class="card narrow">
+    <h1>Iniciar sesion</h1>
+    <p class="subtitle">Acceso para Super Admin y Personal</p>
+    <form method="post" class="form-grid">
+        <label>Usuario</label>
+        <input type="text" name="username" required>
+
+        <label>Contrasena</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">Entrar</button>
+    </form>
+
+    <div class="note">
+        <strong>Usuarios iniciales:</strong><br>
+        superadmin / Admin123*<br>
+        personal / Personal123*
+    </div>
+</section>
+{% endblock %}

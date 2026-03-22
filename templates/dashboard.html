@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<section class="stats-grid">
+    <article class="stat-card">
+        <h3>Repuestos</h3>
+        <p>{{ parts_count }}</p>
+    </article>
+    <article class="stat-card">
+        <h3>Stock Bajo (<= 5)</h3>
+        <p>{{ low_stock }}</p>
+    </article>
+    <article class="stat-card">
+        <h3>Facturas</h3>
+        <p>{{ invoices_count }}</p>
+    </article>
+    <article class="stat-card">
+        <h3>Ventas Totales</h3>
+        <p>${{ '%.2f'|format(total_sales) }}</p>
+    </article>
+</section>
+{% endblock %}

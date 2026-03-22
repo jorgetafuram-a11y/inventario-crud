@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{% if part %}Editar{% else %}Nuevo{% endif %} Repuesto{% endblock %}
+{% block content %}
+<section class="card">
+    <h1>{% if part %}Editar{% else %}Nuevo{% endif %} Repuesto</h1>
+    <form method="post" class="form-grid">
+        <label>Codigo *</label>
+        <input type="text" name="code" value="{{ part.code if part else '' }}" required>
+
+        <label>Nombre *</label>
+        <input type="text" name="name" value="{{ part.name if part else '' }}" required>
+
+        <label>Tipo de Vehiculo *</label>
+        <select name="vehicle_type" required>
+            <option value="">Selecciona</option>
+            <option value="carro" {% if part and part.vehicle_type == 'carro' %}selected{% endif %}>Carro</option>
+            <option value="moto" {% if part and part.vehicle_type == 'moto' %}selected{% endif %}>Moto</option>
+        </select>
+
+        <label>Marca</label>
+        <input type="text" name="brand" value="{{ part.brand if part else '' }}">
+
+        <label>Stock *</label>
+        <input type="number" name="stock" min="0" value="{{ part.stock if part else 0 }}" required>
+
+        <label>Precio *</label>
+        <input type="number" name="price" step="0.01" min="0" value="{{ part.price if part else 0 }}" required>
+
+        <button type="submit">Guardar</button>
+    </form>
+</section>
+{% endblock %}

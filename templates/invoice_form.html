@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Factura{% endblock %}
+{% block content %}
+<h1>Nueva Factura</h1>
+<form method="post" class="card">
+    <div class="form-grid">
+        <label>Cliente *</label>
+        <input type="text" name="customer_name" required>
+    </div>
+
+    <h3>Repuestos</h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Nombre</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for part in parts %}
+                <tr>
+                    <td>{{ part.code }}</td>
+                    <td>{{ part.name }}</td>
+                    <td>{{ part.stock }}</td>
+                    <td class="price">{{ '%.2f'|format(part.price) }}</td>
+                    <td>
+                        <input type="hidden" name="part_id" value="{{ part.id }}">
+                        <input class="qty" type="number" name="quantity" min="0" max="{{ part.stock }}" value="0" data-price="{{ part.price }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="total-line">Total estimado: $<span id="estimated-total">0.00</span></p>
+    <button type="submit">Guardar Factura</button>
+</form>
+
+<script>
+    const quantityInputs = document.querySelectorAll('.qty');
+    const totalLabel = document.getElementById('estimated-total');
+
+    function updateEstimatedTotal() {
+        let total = 0;
+        quantityInputs.forEach((input) => {
+            const qty = parseInt(input.value || '0', 10);
+            const price = parseFloat(input.dataset.price || '0');
+            if (!Number.isNaN(qty) && qty > 0) {
+                total += qty * price;
+            }
+        });
+        totalLabel.textContent = total.toFixed(2);
+    }
+
+    quantityInputs.forEach((input) => input.addEventListener('input', updateEstimatedTotal));
+    updateEstimatedTotal();
+</script>
+{% endblock %}
