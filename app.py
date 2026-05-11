@@ -499,6 +499,26 @@ def invoice_export_excel(invoice_id: int):
     )
 
 
+@app.route("/facturas/<int:invoice_id>/eliminar", methods=["POST"])
+@login_required
+@role_required("super_admin")
+def invoice_delete(invoice_id: int):
+    invoice = db.session.get(Invoice, invoice_id)
+    if not invoice:
+        flash("Factura no encontrada.", "danger")
+        return redirect(url_for("invoice_list"))
+
+    for item in invoice.items:
+        if item.part:
+            item.part.stock += item.quantity
+
+    InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
+    db.session.delete(invoice)
+    db.session.commit()
+    flash("Factura eliminada correctamente y stock restaurado.", "info")
+    return redirect(url_for("invoice_list"))
+
+
 @app.route("/usuarios", methods=["GET", "POST"])
 @login_required
 @role_required("super_admin")

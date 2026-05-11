@@ -16,6 +16,7 @@
                 <th>Usuario</th>
                 <th>Fecha</th>
                 <th>Excel</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -27,10 +28,19 @@
                 <td>{{ inv.created_by.username }}</td>
                 <td>{{ inv.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td><a class="btn small" href="{{ url_for('invoice_export_excel', invoice_id=inv.id) }}">Descargar</a></td>
+                <td>
+                    {% if current_user.role == 'super_admin' %}
+                    <form method="post" action="{{ url_for('invoice_delete', invoice_id=inv.id) }}" class="inline-delete" onsubmit="return confirm('Estas seguro de eliminar esta factura? Se restaurara el stock.');">
+                        <button type="submit" class="small danger">Eliminar</button>
+                    </form>
+                    {% else %}
+                    <span>-</span>
+                    {% endif %}
+                </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6">No hay facturas registradas.</td>
+                <td colspan="7">No hay facturas registradas.</td>
             </tr>
             {% endfor %}
         </tbody>
