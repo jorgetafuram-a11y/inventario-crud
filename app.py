@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 from functools import wraps
+from secrets import choice
 
 from flask import ( # type: ignore
     Flask,
@@ -17,10 +18,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.worksheet.table import Table, TableStyleInfo
-
+ 
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "cambia-esta-clave-segura"
+app.config["SECRET_KEY"] = "1010115617"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///inventario.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -32,6 +33,8 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)
+    recovery_code = db.Column(db.String(8), nullable=True)
+    recovery_expires_at = db.Column(db.DateTime, nullable=True)
 
 
 class Part(db.Model):
@@ -117,6 +120,47 @@ def get_current_user() -> User | None:
     if not user_id:
         return None
     return db.session.get(User, user_id)
+
+
+def ensure_user_recovery_columns() -> None:
+    columns = {
+        row[1]
+        for row in db.session.execute(db.text("PRAGMA table_info(user)")).fetchall()
+    }
+
+    if "recovery_code" not in columns:
+        db.session.execute(
+            db.text("ALTER TABLE user ADD COLUMN recovery_code VARCHAR(8)")
+        )
+    if "recovery_expires_at" not in columns:
+        db.session.execute(
+            db.text("ALTER TABLE user ADD COLUMN recovery_expires_at DATETIME")
+        )
+
+    db.session.commit()
+
+
+def generate_password_recovery_code() -> str:
+    digits = "0123456789"
+    while True:
+        code = "".join(choice(digits) for _ in range(8))
+        exists = User.query.filter_by(recovery_code=code).first()
+        if not exists:
+            return code
+
+
+def validate_password_recovery_code(code: str) -> User | None:
+    user = User.query.filter_by(recovery_code=code).first()
+    if not user or not user.recovery_expires_at:
+        return None
+
+    if user.recovery_expires_at < datetime.utcnow():
+        user.recovery_code = None
+        user.recovery_expires_at = None
+        db.session.commit()
+        return None
+
+    return user
 
 
 @app.context_processor
@@ -486,8 +530,99 @@ def users_manage():
     return render_template("users.html", users=users)
 
 
+@app.route("/usuarios/<int:user_id>/generar-recuperacion", methods=["POST"])
+@login_required
+@role_required("super_admin")
+def user_generate_recovery_code(user_id: int):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("Usuario no encontrado.", "danger")
+        return redirect(url_for("users_manage"))
+
+    code = generate_password_recovery_code()
+    user.recovery_code = code
+    user.recovery_expires_at = datetime.utcnow() + timedelta(minutes=30)
+    db.session.commit()
+
+    flash(
+        f"Codigo de recuperacion para {user.username} (valido 30 min): {code}",
+        "info",
+    )
+    return redirect(url_for("users_manage"))
+
+
+@app.route("/usuarios/<int:user_id>/eliminar", methods=["POST"])
+@login_required
+@role_required("super_admin")
+def user_delete(user_id: int):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("Usuario no encontrado.", "danger")
+        return redirect(url_for("users_manage"))
+
+    if user.id == session.get("user_id"):
+        flash("No puedes eliminar tu propio usuario.", "danger")
+        return redirect(url_for("users_manage"))
+
+    if user.role == "super_admin":
+        super_admin_count = User.query.filter_by(role="super_admin").count()
+        if super_admin_count <= 1:
+            flash("No puedes eliminar el ultimo super admin.", "danger")
+            return redirect(url_for("users_manage"))
+
+    if user.invoices:
+        flash("No puedes eliminar un usuario con facturas registradas.", "danger")
+        return redirect(url_for("users_manage"))
+
+    db.session.delete(user)
+    db.session.commit()
+    flash("Usuario eliminado correctamente.", "info")
+    return redirect(url_for("users_manage"))
+
+
+@app.route("/recuperar-contrasena", methods=["GET", "POST"])
+def password_recovery():
+    code_prefill = request.args.get("codigo", "").strip()
+
+    if request.method == "POST":
+        code = request.form.get("code", "").strip()
+        password = request.form.get("password", "")
+        password_confirm = request.form.get("password_confirm", "")
+
+        if not code:
+            flash("Debes ingresar el codigo de recuperacion.", "danger")
+            return render_template("password_recovery.html", code=code_prefill)
+
+        if len(code) > 8 or not code.isdigit():
+            flash("El codigo debe ser numerico y tener maximo 8 digitos.", "danger")
+            return render_template("password_recovery.html", code=code)
+
+        if len(password) < 8:
+            flash("La contrasena debe tener al menos 8 caracteres.", "danger")
+            return render_template("password_recovery.html", code=code)
+
+        if password != password_confirm:
+            flash("Las contrasenas no coinciden.", "danger")
+            return render_template("password_recovery.html", code=code)
+
+        user = validate_password_recovery_code(code)
+        if not user:
+            flash("Codigo invalido o vencido.", "danger")
+            return render_template("password_recovery.html", code=code)
+
+        user.password_hash = generate_password_hash(password)
+        user.recovery_code = None
+        user.recovery_expires_at = None
+        db.session.commit()
+        flash("Contrasena actualizada correctamente. Ya puedes iniciar sesion.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("password_recovery.html", code=code_prefill)
+
+
 with app.app_context():
     db.create_all()
+    ensure_user_recovery_columns()
     seed_users()
 
 

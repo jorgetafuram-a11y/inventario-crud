@@ -31,6 +31,7 @@
                 <th>ID</th>
                 <th>Usuario</th>
                 <th>Rol</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -39,6 +40,18 @@
                 <td>{{ user.id }}</td>
                 <td>{{ user.username }}</td>
                 <td>{{ user.role }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('user_generate_recovery_code', user_id=user.id) }}" class="inline-delete" onsubmit="return confirm('Generar codigo de recuperacion para este usuario?');">
+                        <button type="submit" class="small">Recuperar clave</button>
+                    </form>
+                    {% if user.id != current_user.id %}
+                    <form method="post" action="{{ url_for('user_delete', user_id=user.id) }}" class="inline-delete" onsubmit="return confirm('Estas seguro de eliminar este usuario?');">
+                        <button type="submit" class="small danger">Eliminar</button>
+                    </form>
+                    {% else %}
+                    <span>-</span>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

@@ -7,10 +7,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <header class="topbar">
-        <div class="logo">Inventario Repuestos</div>
-        {% if current_user %}
-            <nav class="menu">
+    {% if current_user %}
+        <input type="checkbox" id="menu-toggle" class="menu-toggle">
+        <label for="menu-toggle" class="menu-overlay" aria-hidden="true"></label>
+
+        <aside class="sidebar">
+            <nav class="menu">  
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a href="{{ url_for('inventory_list') }}">Inventario</a>
                 <a href="{{ url_for('invoice_list') }}">Facturas</a>
@@ -19,21 +21,30 @@
                 {% endif %}
                 <a href="{{ url_for('logout') }}">Salir ({{ current_user.username }})</a>
             </nav>
-        {% endif %}
-    </header>
+        </aside>
+    {% endif %}
 
-    <main class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="alerts">
-                    {% for category, message in messages %}
-                        <div class="alert {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
+    <div class="page-shell">
+        <header class="topbar">
+            {% if current_user %}
+                <label for="menu-toggle" class="menu-button">Menu</label>
             {% endif %}
-        {% endwith %}
+            <div class="logo">Inventario Repuestos</div>
+        </header>
 
-        {% block content %}{% endblock %}
-    </main>
+        <main class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="alerts">
+                        {% for category, message in messages %}
+                            <div class="alert {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 </body>
 </html>

@@ -1,11 +1,13 @@
 :root {
-    --bg: #f1f5f9;
+    --bg: #eceef2;
     --card: #ffffff;
     --text: #1f2937;
-    --muted: #64748b;
-    --primary: #0f766e;
-    --danger: #b91c1c;
-    --border: #dbe2ea;
+    --muted: #6b7280;
+    --primary: #4f46e5;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --sidebar: #1e293b;
+    --border: #dde3ea;
 }
 
 * {
@@ -15,16 +17,17 @@
 body {
     margin: 0;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(180deg, #e2e8f0 0%, #f8fafc 100%);
+    background: var(--bg);
     color: var(--text);
 }
 
 .topbar {
-    background: #0b1324;
+    background: linear-gradient(90deg, #4338ca 0%, #4f46e5 100%);
     color: #fff;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 12px;
     padding: 14px 22px;
 }
 
@@ -32,16 +35,81 @@ body {
     font-weight: 700;
 }
 
+.page-shell {
+    min-height: 100vh;
+}
+
+.menu-toggle {
+    position: fixed;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.menu-button {
+    background: rgba(15, 23, 42, 0.25);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    padding: 7px 12px;
+    cursor: pointer;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    max-width: calc(100vw - 44px);
+    height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 18px 36px rgba(2, 6, 23, 0.42);
+    transform: translateX(-102%);
+    transition: transform 0.25s ease;
+    z-index: 30;
+    padding-top: 72px;
+}
+
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 25;
+}
+
 .menu {
     display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 10px;
 }
 
 .menu a {
     color: #fff;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13px;
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: background-color 0.2s ease;
+}
+
+.menu a:hover {
+    background: rgba(99, 102, 241, 0.32);
+}
+
+.menu-toggle:checked ~ .sidebar {
+    transform: translateX(0);
+}
+
+.menu-toggle:checked ~ .menu-overlay {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .container {
@@ -52,10 +120,10 @@ body {
 
 .card {
     background: var(--card);
-    border-radius: 10px;
+    border-radius: 4px;
     border: 1px solid var(--border);
     padding: 18px;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    box-shadow: none;
 }
 
 .narrow {
@@ -70,8 +138,8 @@ body {
 
 .note {
     margin-top: 18px;
-    background: #ecfeff;
-    border: 1px solid #99f6e4;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
     padding: 10px;
     border-radius: 8px;
     font-size: 14px;
@@ -101,24 +169,29 @@ input,
 select,
 button {
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 2px;
     padding: 10px 12px;
     font-size: 14px;
 }
 
-button,
-.btn {
-    background: var(--primary);
+button {
+    background: var(--success);
     color: #fff;
     border: none;
-    text-decoration: none;
-    display: inline-block;
     cursor: pointer;
 }
 
 .btn {
+    background: var(--primary);
+    color: #fff;
+    text-decoration: none;
+    display: inline-block;
+    border: none;
+}
+
+.btn {
     padding: 9px 12px;
-    border-radius: 8px;
+    border-radius: 2px;
     font-size: 14px;
 }
 
@@ -139,7 +212,7 @@ button,
     overflow-x: auto;
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 2px;
 }
 
 table {
@@ -157,6 +230,7 @@ td {
 
 th {
     background: #f8fafc;
+    font-weight: 500;
 }
 
 .stats-grid {
@@ -168,7 +242,7 @@ th {
 .stat-card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 2px;
     padding: 16px;
 }
 
@@ -195,7 +269,7 @@ th {
 
 .alert {
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 2px;
     margin: 8px 0;
     font-size: 14px;
 }
@@ -222,8 +296,10 @@ th {
 
 @media (max-width: 640px) {
     .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .container {
+        margin: 20px auto;
     }
 }
