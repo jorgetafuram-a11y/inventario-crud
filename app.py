@@ -194,6 +194,52 @@ def login():
     return render_template("login.html")
 
 
+@app.route("/registro", methods=["GET", "POST"])
+def register():
+    if session.get("user_id"):
+        return redirect(url_for("dashboard"))
+    
+    if request.method == "POST":
+        username = request.form.get("username", "").strip().lower()
+        password = request.form.get("password", "")
+        password_confirm = request.form.get("password_confirm", "")
+
+        # Validaciones
+        if not username or not password:
+            flash("Usuario y contraseña son requeridos.", "danger")
+            return render_template("register.html")
+
+        if len(username) < 3:
+            flash("El usuario debe tener al menos 3 caracteres.", "danger")
+            return render_template("register.html", username=username)
+
+        if len(password) < 8:
+            flash("La contraseña debe tener al menos 8 caracteres.", "danger")
+            return render_template("register.html", username=username)
+
+        if password != password_confirm:
+            flash("Las contraseñas no coinciden.", "danger")
+            return render_template("register.html", username=username)
+
+        if User.query.filter_by(username=username).first():
+            flash("El usuario ya existe.", "danger")
+            return render_template("register.html")
+
+        # Crear nuevo usuario con rol "personal"
+        user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            role="personal",
+        )
+        db.session.add(user)
+        db.session.commit()
+        
+        flash("Cuenta creada exitosamente. Ahora puedes iniciar sesión.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+
 @app.route("/logout")
 @login_required
 def logout():

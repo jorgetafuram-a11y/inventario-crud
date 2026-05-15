@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Registro | Inventario Repuestos{% endblock %}
+{% block content %}
+<section class="card narrow">
+    <h1>Crear cuenta</h1>
+    <p class="subtitle">Registro de nuevo usuario</p>
+    <form method="post" class="form-grid">
+        <label>Usuario</label>
+        <input type="text" name="username" value="{{ username or '' }}" required minlength="3" placeholder="Mínimo 3 caracteres">
+
+        <label>Contraseña</label>
+        <input type="password" name="password" required minlength="8" placeholder="Mínimo 8 caracteres">
+
+        <label>Confirmar contraseña</label>
+        <input type="password" name="password_confirm" required minlength="8" placeholder="Repite tu contraseña">
+
+        <button type="submit">Crear cuenta</button>
+    </form>
+
+    <p class="subtitle" style="margin-top:12px;">
+        ¿Ya tienes cuenta? Inicia sesión haciendo click
+        <a href="{{ url_for('login') }}">aqui</a>.
+    </p>
+
+</section>
+{% endblock %}
